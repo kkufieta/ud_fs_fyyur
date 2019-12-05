@@ -12,6 +12,8 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
+from flask_migrate import Migrate
+import config
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -21,17 +23,29 @@ moment = Moment(app)
 app.config.from_object('config')
 db = SQLAlchemy(app)
 
-# TODO: connect to a local postgresql database
+# Connect to a local postgresql database
+app.config['SQLALCHEMY_DATABASE_URI'] = config.SQLALCHEMY_DATABASE_URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = config.SQLALCHEMY_TRACK_MODIFICATIONS
+# db object links sqlalchemy to our flask app
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
+# Venues and Artists have a many-to-many relationship: An artist can perform at
+# several venues, and a venue can host several artists. The Shows are the 
+# association between the Venues and Artists (thus represented as an association 
+# table).
 
+shows = db.Table('shows',
+                  db.Column('venue_id', db.Integer, db.ForeignKey('venue.id'), primary_key=True),
+                  db.Column('artist_id', db.Integer, db.ForeignKey('artist.id'), primary_key=True))
 class Venue(db.Model):
-    __tablename__ = 'Venue'
+    __tablename__ = 'venue'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
+    name = db.Column(db.String, nullable=False)
     city = db.Column(db.String(120))
     state = db.Column(db.String(120))
     address = db.Column(db.String(120))
@@ -39,13 +53,20 @@ class Venue(db.Model):
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
+    artists = db.relationship('Artist', secondary=shows, backref=db.backref('venues', lazy=True))
+
+    def __repr__(self):
+        s = f'<Venue id: {self.id}, name: {self.name}, city: {self.city}, '  \
+            + f'state: {self.state}, address: {self.address}, phone: {self.phone}, ' \
+            + f'image_link: {self.image_link}, facebook_link: {self.facebook_link}>\n'
+        return s
+          
 
 class Artist(db.Model):
-    __tablename__ = 'Artist'
+    __tablename__ = 'artist'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
+    name = db.Column(db.String, nullable=False)
     city = db.Column(db.String(120))
     state = db.Column(db.String(120))
     phone = db.Column(db.String(120))
@@ -53,9 +74,11 @@ class Artist(db.Model):
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+    def __repr__(self):
+          s = f'<Artist id: {self.id}, name: {self.name}, city: {self.city}, ' \
+              + f'state: {self.state}, phone: {self.phone}, genres: {self.genres} ' \
+              + f'image_link: {self.image_link}, facebook_link: {self.facebook_link}>\n'
+          return s
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -512,7 +535,7 @@ if not app.debug:
 
 # Default port:
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
 
 # Or specify port manually:
 '''

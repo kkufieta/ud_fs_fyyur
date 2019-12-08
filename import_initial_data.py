@@ -96,6 +96,14 @@ shows_data = [{
     "venue_id": 3,
     "artist_id": 6,
     "start_time": "2035-04-01T20:00:00.000Z"
+    }, {
+    "venue_id": 3,
+    "artist_id": 6,
+    "start_time": "2035-04-01T20:00:00.000Z"
+    }, {
+    "venue_id": 3,
+    "artist_id": 6,
+    "start_time": "2035-04-01T20:00:00.000Z"
     }]
 
 

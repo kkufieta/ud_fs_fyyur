@@ -102,7 +102,6 @@ shows_data = [{
 #  ----------------------------------------------------------------
 #  Load Data into DB
 #  ----------------------------------------------------------------
-'''
 for v in venues_data:
     venue = Venue(id=v["id"],
                   name=v["name"])
@@ -118,8 +117,6 @@ for a in artists_data:
         setattr(artist, key, value)
     db.session.add(artist)
     db.session.commit()
-'''
-
 
 for s in shows_data:
     show = Show(venue_id=s["venue_id"],

@@ -33,14 +33,21 @@ migrate = Migrate(app, db)
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
-# Venues and Artists have a many-to-many relationship: An artist can perform at
-# several venues, and a venue can host several artists. The Shows are the 
-# association between the Venues and Artists (thus represented as an association 
-# table).
+# Both Venues and Artists have a one-to-many relationship with Shows
+# A venue can have multiple shows, and an artist can have multiple shows.
+# A show has only one artist and one venue.
+class Show(db.Model):
+      __tablename__ = 'show'
+      id = db.Column(db.Integer, primary_key=True)
+      start_time = db.Column(db.DateTime, nullable=False)
+      venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
+      artist_id = db.Column(db.Integer, db.ForeignKey('artist.id'), nullable=False)
 
-shows = db.Table('shows',
-                  db.Column('venue_id', db.Integer, db.ForeignKey('venue.id'), primary_key=True),
-                  db.Column('artist_id', db.Integer, db.ForeignKey('artist.id'), primary_key=True))
+      def __repr__(self):
+          s = f'<Show id: {self.id}, venue_id: {self.venue_id}, artist_id: {self.artist_id}, '  \
+              + f'start_time: {self.start_time}>\n'
+          return s
+
 class Venue(db.Model):
     __tablename__ = 'venue'
 
@@ -52,15 +59,14 @@ class Venue(db.Model):
     phone = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
-
-    artists = db.relationship('Artist', secondary=shows, backref=db.backref('venues', lazy=True))
+    shows = db.relationship('Show', backref='venue', lazy=True)
 
     def __repr__(self):
         s = f'<Venue id: {self.id}, name: {self.name}, city: {self.city}, '  \
             + f'state: {self.state}, address: {self.address}, phone: {self.phone}, ' \
-            + f'image_link: {self.image_link}, facebook_link: {self.facebook_link}>\n'
+            + f'image_link: {self.image_link}, facebook_link: {self.facebook_link}, ' \
+            + f'shows: {self.shows}>\n'
         return s
-          
 
 class Artist(db.Model):
     __tablename__ = 'artist'
@@ -73,11 +79,13 @@ class Artist(db.Model):
     genres = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    shows = db.relationship('Show', backref='artist', lazy=True)
 
     def __repr__(self):
           s = f'<Artist id: {self.id}, name: {self.name}, city: {self.city}, ' \
-              + f'state: {self.state}, phone: {self.phone}, genres: {self.genres} ' \
-              + f'image_link: {self.image_link}, facebook_link: {self.facebook_link}>\n'
+              + f'state: {self.state}, phone: {self.phone}, genres: {self.genres}, ' \
+              + f'image_link: {self.image_link}, facebook_link: {self.facebook_link},' \
+              + f'shows: {self.shows}>\n'
           return s
 
 #----------------------------------------------------------------------------#

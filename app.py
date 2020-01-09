@@ -14,6 +14,7 @@ from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
 import config
+import sys
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -194,14 +195,25 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
-  # TODO: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
-
-  # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+  try:
+    data = request.form
+    venue = Venue(name=data['name'], city=data['city'], state=data['state'],
+                  address=data['address'], phone=data['phone'], genres=data.getlist('genres'),
+                  facebook_link=data['facebook_link'])
+    db.session.add(venue)
+    db.session.commit()
+    venue = Venue.query.filter(Venue.name == data['name']).one()
+    print(venue)
+    # Flashing: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+    flash('Venue ' + venue.name + ' was successfully listed!')
+  except:
+    error = True
+    db.session.rollback()
+    print(sys.exc_info())
+    flash('An error occured. Venue ' + request.form['name'] + ' could not be listed.')
+  finally:
+    db.session.close()
+    
   return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
@@ -217,7 +229,6 @@ def delete_venue(venue_id):
 #  ----------------------------------------------------------------
 @app.route('/artists')
 def artists():
-  # TODO: replace with real data returned from querying the database
   artists = Artist.query.with_entities(Artist.id, Artist.name).all()
   return render_template('pages/artists.html', artists=artists)
 
